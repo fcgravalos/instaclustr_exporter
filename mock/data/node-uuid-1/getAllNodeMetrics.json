@@ -1,0 +1,128 @@
+[
+  {
+    "id": "node-uuid-1",
+    "payload": [
+      {
+        "metric": "clientRequestRead",
+        "type": "latency_per_operation",
+        "unit": "us/1",
+        "values": [
+          {
+            "time": "2017-07-03T09:37:04.000Z",
+            "value": "1462.5666666666664"
+          }
+        ]
+      },
+      {
+        "metric": "clientRequestRead",
+        "type": "95thPercentile",
+        "unit": "us",
+        "values": [
+          {
+            "time": "2017-07-03T09:37:04.000Z",
+            "value": "1866.1645999999998"
+          }
+        ]
+      },
+      {
+        "metric": "cpuUtilization",
+        "type": "percentage",
+        "unit": "1",
+        "values": [
+          {
+            "time": "2017-07-03T09:37:04.000Z",
+            "value": "2.5884383"
+          }
+        ]
+      },
+      {
+        "metric": "repairs",
+        "type": "activetasks",
+        "unit": "1",
+        "values": [
+          {
+            "time": "2017-07-03T09:37:04.000Z",
+            "value": "0.0"
+          }
+        ]
+      },
+      {
+        "metric": "repairs",
+        "type": "pendingtasks",
+        "unit": "1",
+        "values": [
+          {
+            "time": "2017-07-03T09:37:04.000Z",
+            "value": "0.0"
+          }
+        ]
+      },
+      {
+        "metric": "clientRequestWrite",
+        "type": "latency_per_operation",
+        "unit": "us/1",
+        "values": [
+          {
+            "time": "2017-07-03T09:37:04.000Z",
+            "value": "1293.5333333333335"
+          }
+        ]
+      },
+      {
+        "metric": "clientRequestWrite",
+        "type": "95thPercentile",
+        "unit": "us",
+        "values": [
+          {
+            "time": "2017-07-03T09:37:04.000Z",
+            "value": "1669.6253"
+          }
+        ]
+      },
+      {
+        "metric": "diskUtilization",
+        "type": "percentage",
+        "unit": "1",
+        "values": [
+          {
+            "time": "2017-07-03T09:37:04.000Z",
+            "value": "7.6197357"
+          }
+        ]
+      },
+      {
+        "metric": "cassandraReads",
+        "type": "count",
+        "unit": "1/s",
+        "values": [
+          {
+            "time": "2017-07-03T09:37:04.000Z",
+            "value": "1.25"
+          }
+        ]
+      },
+      {
+        "metric": "cassandraWrites",
+        "type": "count",
+        "unit": "1/s",
+        "values": [
+          {
+            "time": "2017-07-03T09:37:04.000Z",
+            "value": "1.25"
+          }
+        ]
+      },
+      {
+        "metric": "compactions",
+        "type": "pendingtasks",
+        "unit": "1",
+        "values": [
+          {
+            "time": "2017-07-03T09:37:04.000Z",
+            "value": "0.0"
+          }
+        ]
+      }
+    ]
+  }
+]

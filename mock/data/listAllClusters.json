@@ -1,0 +1,10 @@
+[
+  {
+    "id": "cluster-uuid-1",
+    "name": "MOCKED_CLUSTER_01",
+    "cassandraVersion": "apache-cassandra-2.1.10",
+    "nodeCount": 1,
+    "runningNodeCount": 1,
+    "derivedStatus": "RUNNING"
+  }
+]

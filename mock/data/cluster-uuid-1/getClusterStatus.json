@@ -1,0 +1,29 @@
+{
+  "dataCentres": [
+    {
+      "id": "datacentre-uuid-1",
+      "name": "MOCKED_DATACENTRE_01",
+      "provider": "AWS_VPC",
+      "cdcNetwork": {
+        "network": "a.b.0.0",
+        "prefixLength": 16
+      },
+      "nodes": [
+        {
+          "id": "node-uuid-1",
+          "size": "size",
+          "rack": "MOCKED_RACK_01",
+          "publicAddress": "a.b.c.d",
+          "privateAddress": "e.f.g.h",
+          "nodeStatus": "RUNNING",
+          "sparkMaster": false,
+          "sparkJobserver": false,
+          "zeppelin": false
+        }
+      ],
+      "nodeCount": 1,
+      "encryptionKeyId": null,
+      "resizeTargetNodeSize": null
+    }
+  ]
+}
