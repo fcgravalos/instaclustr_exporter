@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
+	"net/url"
 
 	"github.com/prometheus/common/log"
 )
 
 const (
-	//instaclustrURL          = "https://api.instaclustr.com"
-	instaclustrURL          = "http://127.0.0.1:8082"
+	defaultURL              = "https://api.instaclustr.com"
 	provisioningAPIEndpoint = "provisioning"
 	monitoringAPIEndpoint   = "monitoring"
 	provisioningAPIVersion  = "v1"
@@ -24,18 +23,11 @@ var (
 	monitoringAPIKey   string
 )
 
-func init() {
-	if os.Getenv("INSTACLUSTR_USER") != "" {
-		user = os.Getenv("INSTACLUSTR_USER")
-	}
-
-	if os.Getenv("PROVISIONING_API_KEY") != "" {
-		provisioningAPIKey = os.Getenv("PROVISIONING_API_KEY")
-	}
-
-	if os.Getenv("MONITORING_API_KEY") != "" {
-		monitoringAPIKey = os.Getenv("MONITORING_API_KEY")
-	}
+type Config struct {
+	Url                string
+	User               string
+	ProvisioningAPIKey string
+	MonitoringAPIKey   string
 }
 
 type instaclustrClient struct {
@@ -53,31 +45,42 @@ type ProvisioningClient instaclustrClient
 // MonitoringClient is a client for InstaClustr Monitoring API
 type MonitoringClient instaclustrClient
 
-// NewProvisioningClient creates a ProvisioningClient
-func NewProvisioningClient() *ProvisioningClient {
-	return &ProvisioningClient{
-		url:         instaclustrURL,
+func createInstaClustrClient(instaclustrURL string, user string, apiKey string, apiEndpoint string, apiVersion string) instaclustrClient {
+	var stringURL string
+	parsedURL, err := url.Parse(instaclustrURL)
+	if err != nil {
+		log.Errorf("Parsing error: %v", err)
+		stringURL = defaultURL
+	} else if parsedURL.String() == "" {
+		stringURL = defaultURL
+	} else {
+		stringURL = parsedURL.String()
+	}
+	return instaclustrClient{
+		url:         stringURL,
 		user:        user,
-		APIKey:      provisioningAPIKey,
-		APIEndpoint: provisioningAPIEndpoint,
-		APIVersion:  provisioningAPIVersion,
+		APIKey:      apiKey,
+		APIEndpoint: apiEndpoint,
+		APIVersion:  apiVersion,
 		client:      &http.Client{},
 	}
+}
+
+// NewProvisioningClient creates a ProvisioningClient
+func NewProvisioningClient(config Config) *ProvisioningClient {
+	ic := createInstaClustrClient(config.Url, config.User, config.ProvisioningAPIKey, provisioningAPIEndpoint, provisioningAPIVersion)
+	pc := ProvisioningClient(ic)
+	return &pc
 }
 
 // NewMonitoringClient creates a MonitoringClient
-func NewMonitoringClient() *MonitoringClient {
-	return &MonitoringClient{
-		url:         instaclustrURL,
-		user:        user,
-		APIKey:      monitoringAPIKey,
-		APIEndpoint: monitoringAPIEndpoint,
-		APIVersion:  monitoringAPIVersion,
-		client:      &http.Client{},
-	}
+func NewMonitoringClient(config Config) *MonitoringClient {
+	ic := createInstaClustrClient(config.Url, config.User, config.MonitoringAPIKey, monitoringAPIEndpoint, monitoringAPIVersion)
+	mc := MonitoringClient(ic)
+	return &mc
 }
 
-func sendRequest(c *instaclustrClient, req *http.Request) ([]byte, error) {
+func (c instaclustrClient) sendRequest(req *http.Request) ([]byte, error) {
 	req.SetBasicAuth(c.user, c.APIKey)
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -101,8 +104,7 @@ func (c ProvisioningClient) GetClusters() []byte {
 		return nil
 	}
 
-	ic := instaclustrClient(c)
-	data, err := sendRequest(&ic, req)
+	data, err := instaclustrClient(c).sendRequest(req)
 	if err != nil {
 		log.Errorf("Error querying %s: %s", req.RequestURI, err.Error())
 		return nil
@@ -127,8 +129,7 @@ func (c ProvisioningClient) GetClusterStatus(clusterID string) []byte {
 		return nil
 	}
 
-	ic := instaclustrClient(c)
-	data, err := sendRequest(&ic, req)
+	data, err := instaclustrClient(c).sendRequest(req)
 	if err != nil {
 		log.Errorf("Error querying %s: %s", req.RequestURI, err.Error())
 		return nil
@@ -153,8 +154,7 @@ func (c MonitoringClient) GetNodeMetric(nodeID string, metric string) []byte {
 		return nil
 	}
 
-	ic := instaclustrClient(c)
-	data, err := sendRequest(&ic, req)
+	data, err := instaclustrClient(c).sendRequest(req)
 	if err != nil {
 		log.Errorf("Error querying %s: %s", req.RequestURI, err.Error())
 		return nil

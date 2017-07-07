@@ -2,24 +2,57 @@ package instaclustr
 
 import (
 	"bytes"
+	"fmt"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/fcgravalos/instaclustr_exporter/common"
 	"github.com/fcgravalos/instaclustr_exporter/mock"
 )
 
+var (
+	mockServer *common.Server
+	icOpts     Config
+)
+
 func setup(up chan bool) {
+	// Picking up random port for InstaClustr API mock server
+	mockServerPort := strconv.Itoa(common.PickRandomTCPPort())
+	mockServerListenAddress := fmt.Sprintf("127.0.0.1:%s", mockServerPort)
+
+	msOpts := common.ServerOptions{
+		ListenAddress:    mockServerListenAddress,
+		LivenessProbeURL: "/health",
+		ShutdownURL:      "/shutdown",
+		ReadTimeOut:      10 * time.Second,
+		WriteTimeOut:     10 * time.Second,
+	}
+
+	icOpts = Config{
+		Url:                fmt.Sprintf("http://"+"%s", mockServerListenAddress), //InstaClustr API Mock Server
+		User:               "test",
+		ProvisioningAPIKey: "test",
+		MonitoringAPIKey:   "test",
+	}
+	mockServer = mock.NewMockServer(msOpts)
+
 	go func() {
-		mock.NewMockServer()
+		mockServer.Start()
 	}()
 	go func(chan bool) {
-		mock.WaitForServerUp()
+		mockServer.WaitForLiveness()
 		up <- true
 	}(up)
 }
 
+func tearDown() {
+	mockServer.GracefulShutdown()
+}
+
 func TestGetClusters(t *testing.T) {
-	clustersData := bytes.Trim(NewProvisioningClient().GetClusters(), "\n")
+	clustersData := bytes.Trim(NewProvisioningClient(icOpts).GetClusters(), "\n")
 	expected := []byte(`[{"cassandraVersion":"apache-cassandra-2.1.10","derivedStatus":"RUNNING","id":"cluster-uuid-1","name":"MOCKED_CLUSTER_01","nodeCount":1,"runningNodeCount":1}]`)
 	if !bytes.Equal(clustersData, expected) {
 		t.Errorf("\nGetClusters returned unexpected data.\nGot:\n%sExpected:\n%s", string(clustersData), string(expected))
@@ -36,7 +69,7 @@ func TestGetClusterStatus(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Logf("Testing GetClusterStatus with clusterID %s", c.clusterID)
-		clusterStatus := bytes.Trim(NewProvisioningClient().GetClusterStatus(c.clusterID), "\n")
+		clusterStatus := bytes.Trim(NewProvisioningClient(icOpts).GetClusterStatus(c.clusterID), "\n")
 		expected := []byte(c.expected)
 		if !bytes.Equal(clusterStatus, expected) {
 			t.Errorf("GetClusterStatus returned unexpected data.\n- Got:\n%s\n- Expected:\n%s",
@@ -70,7 +103,7 @@ func TestGetNodeMetric(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Logf("Testing GetAllNodeMetrics with nodeID %s", c.nodeID)
-		clusterStatus := bytes.Trim(NewMonitoringClient().GetNodeMetric(c.nodeID, c.metric), "\n")
+		clusterStatus := bytes.Trim(NewMonitoringClient(icOpts).GetNodeMetric(c.nodeID, c.metric), "\n")
 		expected := []byte(c.expected)
 		if !bytes.Equal(clusterStatus, expected) {
 			t.Errorf("GetAllNodeMetrics returned unexpected data.\n- Got:\n%s\n- Expected:\n%s",
@@ -86,4 +119,5 @@ func TestMain(m *testing.M) {
 	setup(up)
 	<-up
 	m.Run()
+	tearDown()
 }

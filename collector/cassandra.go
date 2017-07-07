@@ -180,11 +180,12 @@ type Exporter struct {
 	monitoringClient   *instaclustr.MonitoringClient
 }
 
-// NewExporter creates new InstaClustr Cassandra Exporter
-func NewExporter() *Exporter {
+// NewExporter creates new InstaClustr Exporter
+func NewExporter(instaclustrCfg instaclustr.Config) *Exporter {
+	// NewExporter creates new InstaClustr Cassandra Exporter
 	return &Exporter{
-		provisioningClient: instaclustr.NewProvisioningClient(),
-		monitoringClient:   instaclustr.NewMonitoringClient(),
+		provisioningClient: instaclustr.NewProvisioningClient(instaclustrCfg),
+		monitoringClient:   instaclustr.NewMonitoringClient(instaclustrCfg),
 	}
 }
 

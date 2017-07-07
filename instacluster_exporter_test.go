@@ -2,59 +2,73 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/fcgravalos/instaclustr_exporter/common"
+	"github.com/fcgravalos/instaclustr_exporter/instaclustr"
 	"github.com/fcgravalos/instaclustr_exporter/mock"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/log"
 )
 
-var serverAddresses map[string]string
-
-func init() {
-	serverAddresses = make(map[string]string, 2)
-	serverAddresses["01-InstaClustr-API-Mock"] = "127.0.0.1:8082"
-	serverAddresses["02-InstaClustr-Exporter"] = "127.0.0.1:9999"
-}
+var (
+	exporterServer *common.Server
+	mockServer     *common.Server
+)
 
 func setup(up chan bool) {
+	// Picking up random port for InstaClustr API mock server
+	mockServerPort := strconv.Itoa(common.PickRandomTCPPort())
+	mockServerListenAddress := fmt.Sprintf("127.0.0.1:%s", mockServerPort)
+
+	exporterServerPort := strconv.Itoa(common.PickRandomTCPPort())
+	exporterServerListenAddress := fmt.Sprintf("127.0.0.1:%s", exporterServerPort)
+
+	msOpts := common.ServerOptions{
+		ListenAddress:    mockServerListenAddress,
+		LivenessProbeURL: "/health",
+		ShutdownURL:      "/shutdown",
+		ReadTimeOut:      10 * time.Second,
+		WriteTimeOut:     10 * time.Second,
+	}
+
+	sOpts := common.ServerOptions{
+		ListenAddress:    exporterServerListenAddress, //InstaClustr Exporter Server,
+		LivenessProbeURL: "/health",
+		ShutdownURL:      "/shutdown",
+		ReadTimeOut:      10 * time.Second,
+		WriteTimeOut:     10 * time.Second,
+	}
+
+	icOpts := instaclustr.Config{
+		Url:                fmt.Sprintf("http://"+"%s", mockServerListenAddress), //InstaClustr API Mock Server
+		User:               "test",
+		ProvisioningAPIKey: "test",
+		MonitoringAPIKey:   "test",
+	}
+	exporterServer = NewExporter("/metrics", sOpts, icOpts)
+	mockServer = mock.NewMockServer(msOpts)
+
 	go func() {
-		StartExporter()
+		exporterServer.Start()
 	}()
 	go func() {
-		mock.NewMockServer()
+		mockServer.Start()
 	}()
 	go func(chan bool) {
-		WaitForServerUp()
-		mock.WaitForServerUp()
+		exporterServer.WaitForLiveness()
+		mockServer.WaitForLiveness()
 		up <- true
 	}(up)
-
 }
 
 func tearDown() {
-	for k, v := range serverAddresses {
-		log.Infof("Shutting down %s", k)
-		req, err := http.NewRequest("GET", fmt.Sprintf("http://"+"%s/shutdown", v), nil)
-		if err != nil {
-			log.Errorf("Could not send shutdown request to %s Server: %v", k, err)
-		}
-		client := http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Errorf("Error sending request: %v", err)
-		}
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Warnf("Could not read shutdown response: %v", body)
-		}
-		log.Infof("Server status: %s", string(body))
-	}
+	exporterServer.GracefulShutdown()
+	mockServer.GracefulShutdown()
 }
 
 func TestHomeHandler(t *testing.T) {
@@ -98,7 +112,7 @@ func TestHealthHandler(t *testing.T) {
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(healthHandler)
+	handler := http.HandlerFunc(exporterServer.LivenessProbeHandler)
 
 	// Our handlers satisfy http.Handler, so we can call their ServeHTTP method
 	// directly and pass in our Request and ResponseRecorder.
@@ -195,5 +209,5 @@ func TestMain(m *testing.M) {
 	setup(up)
 	<-up
 	m.Run()
-	//tearDown()
+	tearDown()
 }
