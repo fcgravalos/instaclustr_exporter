@@ -1,0 +1,84 @@
+{
+	"ImportPath": "github.com/fcgravalos/instaclustr_exporter",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Deps": [
+		{
+			"ImportPath": "github.com/beorn7/perks/quantile",
+			"Rev": "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
+		},
+		{
+			"ImportPath": "github.com/golang/protobuf/proto",
+			"Rev": "6a1fa9404c0aebf36c879bc50152edcc953910d2"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Comment": "v1.4.0-11-g8c683ee",
+			"Rev": "8c683ee571b6ee7ffc9f1cafd13103c422e71cbf"
+		},
+		{
+			"ImportPath": "github.com/matttproud/golang_protobuf_extensions/pbutil",
+			"Comment": "v1.0.0-2-gc12348c",
+			"Rev": "c12348ce28de40eed0136aa2b644d0ee0650e56c"
+		},
+		{
+			"ImportPath": "github.com/prometheus/client_golang/prometheus",
+			"Comment": "v0.8.0-89-g7793428",
+			"Rev": "77934284f4f639bef201d9f7752effdaeb9c3c60"
+		},
+		{
+			"ImportPath": "github.com/prometheus/client_model/go",
+			"Comment": "model-0.0.2-14-g6f38060",
+			"Rev": "6f3806018612930941127f2a7c6c453ba2c527d2"
+		},
+		{
+			"ImportPath": "github.com/prometheus/common/expfmt",
+			"Rev": "0866df4b85a18d652b6965be022d007cdf076822"
+		},
+		{
+			"ImportPath": "github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg",
+			"Rev": "0866df4b85a18d652b6965be022d007cdf076822"
+		},
+		{
+			"ImportPath": "github.com/prometheus/common/log",
+			"Rev": "0866df4b85a18d652b6965be022d007cdf076822"
+		},
+		{
+			"ImportPath": "github.com/prometheus/common/model",
+			"Rev": "0866df4b85a18d652b6965be022d007cdf076822"
+		},
+		{
+			"ImportPath": "github.com/prometheus/common/version",
+			"Rev": "0866df4b85a18d652b6965be022d007cdf076822"
+		},
+		{
+			"ImportPath": "github.com/prometheus/procfs",
+			"Rev": "822d4a1f8edcbcbc71e8d1fd6527b12331a6d0ad"
+		},
+		{
+			"ImportPath": "github.com/prometheus/procfs/xfs",
+			"Rev": "822d4a1f8edcbcbc71e8d1fd6527b12331a6d0ad"
+		},
+		{
+			"ImportPath": "github.com/sirupsen/logrus",
+			"Comment": "v1.0.0-3-g7dd06bf",
+			"Rev": "7dd06bf38e1e13df288d471a57d5adbac106be9e"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "b90f89a1e7a9c1f6b918820b3daa7f08488c8594"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/windows",
+			"Rev": "b90f89a1e7a9c1f6b918820b3daa7f08488c8594"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/windows/registry",
+			"Rev": "b90f89a1e7a9c1f6b918820b3daa7f08488c8594"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/windows/svc/eventlog",
+			"Rev": "b90f89a1e7a9c1f6b918820b3daa7f08488c8594"
+		}
+	]
+}
