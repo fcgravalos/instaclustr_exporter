@@ -1,6 +1,7 @@
-# InstaClustr Exporter [![Build Status](https://travis-ci.org/fcgravalos/instaclustr_exporter.svg?branch=master)](https://travis-ci.org/fcgravalos/instaclustr_exporter)
+# InstaClustr Exporter [![Build Status](https://travis-ci.org/fcgravalos/instaclustr_exporter.svg?branch=master)](https://travis-ci.org/fcgravalos/instaclustr_exporter) [![CircleCI](https://circleci.com/gh/fcgravalos/instaclustr_exporter.svg?style=shield)](https://circleci.com/gh/fcgravalos/instaclustr_exporter)
 Collects Cassandra metrics from InstaClustr Monitoring API and exports them to prometheus format.
 
+To run it:
 
 ```bash
 make
@@ -65,3 +66,25 @@ Takes precedence over __`instaclustr.user`__
 Takes precedence over __`instaclustr.provisioning-apikey`__
 * __`MONITORING_API_KEY`:__
 Takes precedence over __`instaclustr.monitoring-apikey`__
+
+## Using Docker
+## Using Docker
+
+You can deploy this exporter using the [prom/consul-exporter](https://registry.hub.docker.com/u/prom/consul-exporter/) Docker image.
+
+For example:
+
+```bash
+docker pull fcgravalos/instaclustr-exporter:master
+
+docker run -d -p 9279:9279 fcgravalos/instaclustr-exporter:master \
+ -instaclustr.user=user \
+ -instaclustr.provisioning-apikey=myprovisioningkey \
+ -instaclustr.monitoring-apikey=mymonitoringkey
+```
+
+Keep in mind that your container needs to be able to communicate with the Consul server or agent. Use an IP accessible from the container or set the `--dns` and `--dns-search` options of the `docker run` command:
+
+```bash
+docker run -d -p 9107:9107 --dns=172.17.0.1 --dns-search=service.consul \
+        prom/consul-exporter -consul.server=consul:8500
