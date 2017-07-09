@@ -49,14 +49,14 @@ func main() {
 		telemetryPath  = flag.String("web.telemetry-path", "/metrics", "Path under which to expose metrics.")
 	)
 
-	flag.StringVar(&serverOpts.ListenAddress, "web.listen-address", ":9999", "Address to listen on for web interface and telemetry.")
+	flag.StringVar(&serverOpts.ListenAddress, "web.listen-address", ":9279", "Address to listen on for web interface and telemetry.")
 	flag.StringVar(&serverOpts.LivenessProbeURL, "web.liveness-probe-url", "/health", "URL for health-checks")
 	flag.StringVar(&serverOpts.ShutdownURL, "web.shutdown-url", "/shutdown", "URL for health-checks")
 	flag.DurationVar(&serverOpts.ReadTimeOut, "web.read-timeout", 10*time.Second, "Read/Write Timeout")
 	flag.DurationVar(&serverOpts.WriteTimeOut, "web.write-timeout", 10*time.Second, "Read/Write Timeout")
-	flag.StringVar(&instaclustrCfg.User, "instaclustr.user", os.Getenv("INSTACLUSTR_USER"), "User for InstaClustr API")
-	flag.StringVar(&instaclustrCfg.ProvisioningAPIKey, "instaclustr.provisioning-apikey", os.Getenv("PROVISIONING_API_KEY"), "Key for the provisioning API")
-	flag.StringVar(&instaclustrCfg.MonitoringAPIKey, "instaclustr.monitoring-apikey", os.Getenv("MONITORING_API_KEY"), "Key for the provisioning API")
+	flag.StringVar(&instaclustrCfg.User, "instaclustr.user", "", "User for InstaClustr API")
+	flag.StringVar(&instaclustrCfg.ProvisioningAPIKey, "instaclustr.provisioning-apikey", "", "Key for the provisioning API")
+	flag.StringVar(&instaclustrCfg.MonitoringAPIKey, "instaclustr.monitoring-apikey", "", "Key for the provisioning API")
 
 	flag.Parse()
 
@@ -64,6 +64,20 @@ func main() {
 		fmt.Println(version.Print("instaclustr_exporter"))
 		os.Exit(0)
 	}
+
+	// Make environment variables to take precedence over configuration flags
+	if os.Getenv("INSTACLUSTR_USER") != "" {
+		instaclustrCfg.User = os.Getenv("INSTACLUSTR_USER")
+	}
+
+	if os.Getenv("PROVISIONING_API_KEY") != "" {
+		instaclustrCfg.ProvisioningAPIKey = os.Getenv("PROVISIONING_API_KEY")
+	}
+
+	if os.Getenv("MONITORING_API_KEY") != "" {
+		instaclustrCfg.MonitoringAPIKey = os.Getenv("MONITORING_API_KEY")
+	}
+
 	s := NewExporter(*telemetryPath, serverOpts, instaclustrCfg)
 	s.Start()
 }
