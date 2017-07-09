@@ -70,14 +70,14 @@ Takes precedence over __`instaclustr.monitoring-apikey`__
 ## Using Docker
 ## Using Docker
 
-You can deploy this exporter using the [prom/consul-exporter](https://registry.hub.docker.com/u/prom/consul-exporter/) Docker image.
+You can deploy this exporter using the [fcgravalos/instaclustr-exporter](https://registry.hub.docker.com/u/fcgravalos/instaclustr-exporter/) Docker image.
 
 For example:
 
 ```bash
-docker pull fcgravalos/instaclustr-exporter:master
+docker pull fcgravalos/instaclustr-exporter
 
-docker run -d -p 9279:9279 fcgravalos/instaclustr-exporter:master \
+docker run -d -p 9279:9279 fcgravalos/instaclustr-exporter \
  -instaclustr.user=user \
  -instaclustr.provisioning-apikey=myprovisioningkey \
  -instaclustr.monitoring-apikey=mymonitoringkey
