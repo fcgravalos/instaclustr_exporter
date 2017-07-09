@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	namespace = "cassandra"
+	namespace         = "cassandra"
+	usTosecondsFactor = 1e-06
 )
 
 // InstaClustr API handlers
@@ -34,104 +35,118 @@ var allNodeMetricsQuery = []string{
 
 // Metric descriptors
 var (
+	clusterInfo = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "cluster", "info"),
+		"A mapping between the clusterId and clusterName",
+		[]string{"clusterId", "clusterName"},
+		nil,
+	)
 	clusterRunning = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "cluster", "running"),
 		"Whether or not the cassandra cluster is running.",
-		[]string{"clusterId", "clusterName"},
+		[]string{"clusterId"},
 		nil,
 	)
+	// We don't name it with _count, because in Prometheus this would be a Summary/Histogram.
+	// In our case, we are just grabbing the value from InstaClustr API
 	clusterNodesCount = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "cluster", "nodes_count"),
+		prometheus.BuildFQName(namespace, "cluster", "nodes"),
 		"Number of nodes the cluster is composed",
-		[]string{"clusterId", "clusterName"},
+		[]string{"clusterId"},
 		nil,
 	)
 	clusterNodesRunningCount = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "cluster", "nodes_running_count"),
+		prometheus.BuildFQName(namespace, "cluster", "nodes_running"),
 		"Number of nodes running in the cluster",
-		[]string{"clusterId", "clusterName"},
+		[]string{"clusterId"},
+		nil,
+	)
+	nodeInfo = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "node", "info"),
+		"A mapping between nodeId with its IPs, racks and cluster",
+		[]string{"clusterId", "clusterName", "nodeId", "nodePublicIp", "nodePrivateIp", "rack"},
 		nil,
 	)
 	nodeRunning = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "node", "running"),
 		"Whether or not a single node is running",
-		[]string{"clusterId", "clusterName", "nodeId", "nodePublicIp", "nodePrivateIp", "rack"},
+		[]string{"nodeId"},
 		nil,
 	)
 	nodeCPUUtilizationPercentage = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "node", "cpu_utilization_percentage"),
 		"Current CPU utilisation as a percentage of total available. Maximum value is 100%, regardless of the number of cores on the node.",
-		[]string{"clusterId", "clusterName", "nodeId", "nodePublicIp", "nodePrivateIp", "rack"},
+		[]string{"nodeId"},
 		nil,
 	)
 	nodeDiskUtilizationPercentage = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "node", "disk_utilization_percentage"),
 		"Total disk space utilisation, by Cassandra, as a percentage of total available.",
-		[]string{"clusterId", "clusterName", "nodeId", "nodePublicIp", "nodePrivateIp", "rack"},
+		[]string{"nodeId"},
 		nil,
 	)
 	nodeCassandraReadsPerSecond = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "node", "reads_per_second"),
 		"Reads per second by Cassandra.",
-		[]string{"clusterId", "clusterName", "nodeId", "nodePublicIp", "nodePrivateIp", "rack"},
+		[]string{"nodeId"},
 		nil,
 	)
 	nodeCassandraWritesPerSecond = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "node", "writes_per_second"),
 		"Writes per second by Cassandra.",
-		[]string{"clusterId", "clusterName", "nodeId", "nodePublicIp", "nodePrivateIp", "rack"},
+		[]string{"nodeId"},
 		nil,
 	)
 	nodeCassandraCompactions = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "node", "compactions"),
 		"Number of pending compactions.",
-		[]string{"clusterId", "clusterName", "nodeId", "nodePublicIp", "nodePrivateIp", "rack"},
+		[]string{"nodeId"},
 		nil,
 	)
 	nodeCassandraRepairsPending = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "node", "repairs_pending"),
 		"Number of pending repair tasks.",
-		[]string{"clusterId", "clusterName", "nodeId", "nodePublicIp", "nodePrivateIp", "rack"},
+		[]string{"nodeId"},
 		nil,
 	)
 	nodeCassandraRepairsActive = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "node", "repairs_active"),
 		"Number of pending repair tasks.",
-		[]string{"clusterId", "clusterName", "nodeId", "nodePublicIp", "nodePrivateIp", "rack"},
+		[]string{"nodeId"},
 		nil,
 	)
 	nodeClientRequestReadLatency = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "node", "client_request_read_latency"),
-		"Average latency (us/1) per client read request (i.e. the period from when a node receives a client request, gathers the records and response to the client).",
-		[]string{"clusterId", "clusterName", "nodeId", "nodePublicIp", "nodePrivateIp", "rack"},
+		"Average latency (s/1) per client read request (i.e. the period from when a node receives a client request, gathers the records and response to the client).",
+		[]string{"nodeId"},
 		nil,
 	)
 	nodeClientRequestWriteLatency = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "node", "client_request_write_latency"),
-		"Average latency (us/1) per client write request (i.e. the period from when a node receives a client request, gathers the records and response to the client).",
-		[]string{"clusterId", "clusterName", "nodeId", "nodePublicIp", "nodePrivateIp", "rack"},
+		"Average latency (s/1) per client write request (i.e. the period from when a node receives a client request, gathers the records and response to the client).",
+		[]string{"nodeId"},
 		nil,
 	)
 	nodeClientRequestReadPercentile = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "node", "client_request_read_percentile"),
-		"95th percentile (us) distribution per client read request (i.e. the period from when a node receives a client request, gathers the records and response to the client).",
-		[]string{"clusterId", "clusterName", "nodeId", "nodePublicIp", "nodePrivateIp", "rack"},
+		prometheus.BuildFQName(namespace, "node", "client_request_read_percentile95"),
+		"95th percentile (s) distribution per client read request (i.e. the period from when a node receives a client request, gathers the records and response to the client).",
+		[]string{"nodeId"},
 		nil,
 	)
 	nodeClientRequestWritePercentile = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "node", "client_request_write_percentile"),
-		"95th percentile (us) distribution per client write request (i.e. the period from when a node receives a client request, gathers the records and response to the client).",
-		[]string{"clusterId", "clusterName", "nodeId", "nodePublicIp", "nodePrivateIp", "rack"},
+		prometheus.BuildFQName(namespace, "node", "client_request_write_percentile95"),
+		"95th percentile (s) distribution per client write request (i.e. the period from when a node receives a client request, gathers the records and response to the client).",
+		[]string{"nodeId"},
 		nil,
 	)
 )
 
 type cluster struct {
-	ID               string `json:"id"`
-	Name             string `json:"name"`
-	NodeCount        int    `json:"nodeCount"`
-	RunningNodeCount int    `json:"runningNodeCount"`
-	DerivedStatus    string `json:"derivedStatus"`
+	ID               string  `json:"id"`
+	Name             string  `json:"name"`
+	NodeCount        float64 `json:"nodeCount"`
+	RunningNodeCount float64 `json:"runningNodeCount"`
+	DerivedStatus    string  `json:"derivedStatus"`
 }
 
 type node struct {
@@ -189,6 +204,16 @@ func NewExporter(instaclustrCfg instaclustr.Config) *Exporter {
 	}
 }
 
+func clusterInfoCollector(c cluster, ch chan<- prometheus.Metric) {
+	ch <- prometheus.MustNewConstMetric(
+		clusterInfo,
+		prometheus.CounterValue,
+		1,
+		c.ID,
+		c.Name,
+	)
+}
+
 func clusterHealthCollector(c cluster, ch chan<- prometheus.Metric) {
 	if c.DerivedStatus == "RUNNING" {
 		ch <- prometheus.MustNewConstMetric(
@@ -196,7 +221,6 @@ func clusterHealthCollector(c cluster, ch chan<- prometheus.Metric) {
 			prometheus.GaugeValue,
 			1,
 			c.ID,
-			c.Name,
 		)
 	} else {
 		ch <- prometheus.MustNewConstMetric(
@@ -204,22 +228,33 @@ func clusterHealthCollector(c cluster, ch chan<- prometheus.Metric) {
 			prometheus.GaugeValue,
 			0,
 			c.ID,
-			c.Name,
 		)
 	}
 	ch <- prometheus.MustNewConstMetric(
 		clusterNodesCount,
 		prometheus.GaugeValue,
-		float64(c.NodeCount),
+		c.NodeCount,
 		c.ID,
-		c.Name,
 	)
 	ch <- prometheus.MustNewConstMetric(
 		clusterNodesRunningCount,
 		prometheus.GaugeValue,
-		float64(c.RunningNodeCount),
+		c.RunningNodeCount,
+		c.ID,
+	)
+}
+
+func nodeInfoCollector(c cluster, n node, ch chan<- prometheus.Metric) {
+	ch <- prometheus.MustNewConstMetric(
+		nodeInfo,
+		prometheus.CounterValue,
+		1,
 		c.ID,
 		c.Name,
+		n.ID,
+		n.PublicIP,
+		n.PrivateIP,
+		n.Rack,
 	)
 }
 
@@ -229,24 +264,14 @@ func nodeHealthCollector(c cluster, n node, ch chan<- prometheus.Metric) {
 			nodeRunning,
 			prometheus.GaugeValue,
 			1,
-			c.ID,
-			c.Name,
 			n.ID,
-			n.PublicIP,
-			n.PrivateIP,
-			n.Rack,
 		)
 	} else {
 		ch <- prometheus.MustNewConstMetric(
 			nodeRunning,
 			prometheus.GaugeValue,
 			0,
-			c.ID,
-			c.Name,
 			n.ID,
-			n.PublicIP,
-			n.PrivateIP,
-			n.Rack,
 		)
 	}
 }
@@ -268,12 +293,7 @@ func nodeMetricsCollector(c cluster, n node, ms []metrics, ch chan<- prometheus.
 					nodeCPUUtilizationPercentage,
 					prometheus.GaugeValue,
 					value,
-					c.ID,
-					c.Name,
 					n.ID,
-					n.PublicIP,
-					n.PrivateIP,
-					n.Rack,
 				)
 
 			case "diskUtilization":
@@ -281,12 +301,7 @@ func nodeMetricsCollector(c cluster, n node, ms []metrics, ch chan<- prometheus.
 					nodeDiskUtilizationPercentage,
 					prometheus.GaugeValue,
 					value,
-					c.ID,
-					c.Name,
 					n.ID,
-					n.PublicIP,
-					n.PrivateIP,
-					n.Rack,
 				)
 
 			case "cassandraReads":
@@ -294,12 +309,7 @@ func nodeMetricsCollector(c cluster, n node, ms []metrics, ch chan<- prometheus.
 					nodeCassandraReadsPerSecond,
 					prometheus.GaugeValue,
 					value,
-					c.ID,
-					c.Name,
 					n.ID,
-					n.PublicIP,
-					n.PrivateIP,
-					n.Rack,
 				)
 
 			case "cassandraWrites":
@@ -307,12 +317,7 @@ func nodeMetricsCollector(c cluster, n node, ms []metrics, ch chan<- prometheus.
 					nodeCassandraWritesPerSecond,
 					prometheus.GaugeValue,
 					value,
-					c.ID,
-					c.Name,
 					n.ID,
-					n.PublicIP,
-					n.PrivateIP,
-					n.Rack,
 				)
 
 			case "compactions":
@@ -320,12 +325,7 @@ func nodeMetricsCollector(c cluster, n node, ms []metrics, ch chan<- prometheus.
 					nodeCassandraCompactions,
 					prometheus.GaugeValue,
 					value,
-					c.ID,
-					c.Name,
 					n.ID,
-					n.PublicIP,
-					n.PrivateIP,
-					n.Rack,
 				)
 
 			case "repairs":
@@ -334,24 +334,14 @@ func nodeMetricsCollector(c cluster, n node, ms []metrics, ch chan<- prometheus.
 						nodeCassandraRepairsPending,
 						prometheus.GaugeValue,
 						value,
-						c.ID,
-						c.Name,
 						n.ID,
-						n.PublicIP,
-						n.PrivateIP,
-						n.Rack,
 					)
 				} else if m.Type == "activetasks" {
 					ch <- prometheus.MustNewConstMetric(
 						nodeCassandraRepairsActive,
 						prometheus.GaugeValue,
 						value,
-						c.ID,
-						c.Name,
 						n.ID,
-						n.PublicIP,
-						n.PrivateIP,
-						n.Rack,
 					)
 				} else {
 					log.Warnf("Unknown n::%s metric type %s", m.Name, m.Type)
@@ -362,25 +352,15 @@ func nodeMetricsCollector(c cluster, n node, ms []metrics, ch chan<- prometheus.
 					ch <- prometheus.MustNewConstMetric(
 						nodeClientRequestReadLatency,
 						prometheus.GaugeValue,
-						value,
-						c.ID,
-						c.Name,
+						value*usTosecondsFactor,
 						n.ID,
-						n.PublicIP,
-						n.PrivateIP,
-						n.Rack,
 					)
 				} else if m.Type == "95thPercentile" {
 					ch <- prometheus.MustNewConstMetric(
 						nodeClientRequestReadPercentile,
 						prometheus.GaugeValue,
-						value,
-						c.ID,
-						c.Name,
+						value*usTosecondsFactor,
 						n.ID,
-						n.PublicIP,
-						n.PrivateIP,
-						n.Rack,
 					)
 				} else {
 					log.Warnf("Unknown n::%s metric type %s", m.Name, m.Type)
@@ -391,25 +371,15 @@ func nodeMetricsCollector(c cluster, n node, ms []metrics, ch chan<- prometheus.
 					ch <- prometheus.MustNewConstMetric(
 						nodeClientRequestWriteLatency,
 						prometheus.GaugeValue,
-						value,
-						c.ID,
-						c.Name,
+						value*usTosecondsFactor,
 						n.ID,
-						n.PublicIP,
-						n.PrivateIP,
-						n.Rack,
 					)
 				} else if m.Type == "95thPercentile" {
 					ch <- prometheus.MustNewConstMetric(
 						nodeClientRequestWritePercentile,
 						prometheus.GaugeValue,
-						value,
-						c.ID,
-						c.Name,
+						value*usTosecondsFactor,
 						n.ID,
-						n.PublicIP,
-						n.PrivateIP,
-						n.Rack,
 					)
 				} else {
 					log.Warnf("Unknown n::%s metric type %s", m.Name, m.Type)
@@ -422,9 +392,11 @@ func nodeMetricsCollector(c cluster, n node, ms []metrics, ch chan<- prometheus.
 // Describe describes all the metrics ever exported by the Consul exporter. It
 // implements prometheus.Collector.
 func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
+	ch <- clusterInfo
 	ch <- clusterRunning
 	ch <- clusterNodesCount
 	ch <- clusterNodesRunningCount
+	ch <- nodeInfo
 	ch <- nodeRunning
 	ch <- nodeCPUUtilizationPercentage
 	ch <- nodeDiskUtilizationPercentage
@@ -458,6 +430,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		wg.Add(1)
 		go func(c cluster) {
 			defer wg.Done()
+			clusterInfoCollector(c, ch)
 			clusterHealthCollector(c, ch)
 			// Queryng status of the cluster, gathers the list of Datacentres
 			sem.Lock()
@@ -469,6 +442,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 
 			for _, dc := range dcs.Dcs {
 				for _, n := range dc.Nodes {
+					nodeInfoCollector(c, n, ch)
 					nodeHealthCollector(c, n, ch)
 					// Fetch all metrics from node
 					sem.Lock()
