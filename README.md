@@ -70,7 +70,6 @@ Takes precedence over __`instaclustr.provisioning-apikey`__
 Takes precedence over __`instaclustr.monitoring-apikey`__
 
 ## Using Docker
-## Using Docker
 
 You can deploy this exporter using the [fcgravalos/instaclustr-exporter](https://registry.hub.docker.com/u/fcgravalos/instaclustr-exporter/) Docker image.
 
