@@ -12,21 +12,23 @@ make
 
 | Metric | Meaning | Labels |
 | ------ | ------- | ------ |
-| cassandra_cluster_running | Whether or not the cassandra cluster is running | clusterId, clusterName |
-| cassandra_cluster_nodes_count| Number of nodes the cluster is composed|  clusterId, clusterName |
-| cassandra_cluster_nodes_running_count |Number of nodes running in the cluster | clusterId, clusterName |
-| cassandra_node_running | Whether or not a single node is running | clusterId, clusterName, nodeId, nodePublicIp, nodePrivateIp, rack|
-| cassandra_node_cpu_utilization_percentage | Current CPU utilisation as a percentage of total available. Maximum value is 100%, regardless of the number of cores on the node | clusterId, clusterName, nodeId, nodePublicIp, nodePrivateIp, rack|
-| cassandra_node_disk_utilization_percentage Total disk space utilisation, by Cassandra, as a percentage of total available | clusterId, clusterName, nodeId, nodePublicIp, nodePrivateIp, rack|
-| cassandra_node_client_request_read_latency | Average latency (us/1) per client read request (i.e. the period from when a node receives a client request, gathers the records and response to the client) | clusterId, clusterName, nodeId, nodePublicIp, nodePrivateIp, rack|
-| cassandra_node_client_request_write_latency | Average latency (us/1) per client write request (i.e. the period from when a node receives a client request, gathers the records and response to the client) | clusterId, clusterName, nodeId, nodePublicIp, nodePrivateIp, rack|
-| cassandra_node_client_request_read_percentile | 95th percentile (us) distribution per client read request (i.e. the period from when a node receives a client request, gathers the records and response to the client) | clusterId, clusterName, nodeId, nodePublicIp, nodePrivateIp, rack|
-| cassandra_node_client_request_write_percentile | 95th percentile (us) distribution per client write request (i.e. the period from when a node receives a client request, gathers the records and response to the client) | clusterId, clusterName, nodeId, nodePublicIp, nodePrivateIp, rack|
-| cassandra_node_reads_per_second Reads per second by Cassandra | clusterId, clusterName, nodeId, nodePublicIp, nodePrivateIp, rack|
-| cassandra_node_writes_per_second | Writes per second by Cassandra | clusterId, clusterName, nodeId, nodePublicIp, nodePrivateIp, rack|
-| cassandra_node_compactions | Number of pending compactions | clusterId, clusterName, nodeId, nodePublicIp, nodePrivateIp, rack|
-| cassandra_node_repairs_active Number of pending repair tasks | clusterId, clusterName, nodeId, nodePublicIp, nodePrivateIp, rack|
-| cassandra_node_repairs_pending Number of pending repair tasks | clusterId, clusterName, nodeId, nodePublicIp, nodePrivateIp, rack|
+| cassandra_cluster_info | A mapping between the clusterId and clusterName  |clusterId, clusterName |
+| cassandra_cluster_running | Whether or not the cassandra cluster is running |clusterId|
+| cassandra_cluster_nodes_count| Number of nodes the cluster is composed|clusterId |
+| cassandra_cluster_nodes_running_count |Number of nodes running in the cluster | clusterId|
+| cassandra_node_info | A mapping between nodeId with its IPs, racks and cluster |clusterId, clusterName, nodeId, nodePublicIp, nodePrivateIp, rack|
+| cassandra_node_running | Whether or not a single node is running |nodeId|
+| cassandra_node_cpu_utilization_percentage | Current CPU utilisation as a percentage of total available. Maximum value is 100%, regardless of the number of cores on the node |nodeId|
+| cassandra_node_disk_utilization_percentage | Total disk space utilisation, by Cassandra, as a percentage of total available |nodeId|
+| cassandra_node_client_request_read_latency | Average latency (us/1) per client read request (i.e. the period from when a node receives a client request, gathers the records and response to the client) |nodeId|
+| cassandra_node_client_request_write_latency | Average latency (us/1) per client write request (i.e. the period from when a node receives a client request, gathers the records and response to the client) |nodeId|
+| cassandra_node_client_request_read_percentile | 95th percentile (us) distribution per client read request (i.e. the period from when a node receives a client request, gathers the records and response to the client) |nodeId|
+| cassandra_node_client_request_write_percentile | 95th percentile (us) distribution per client write request (i.e. the period from when a node receives a client request, gathers the records and response to the client) |nodeId|
+| cassandra_node_reads_per_second Reads per second by Cassandra |nodeId|
+| cassandra_node_writes_per_second | Writes per second by Cassandra |nodeId|
+| cassandra_node_compactions | Number of pending compactions |nodeId|
+| cassandra_node_repairs_active Number of pending repair tasks |nodeId|
+| cassandra_node_repairs_pending Number of pending repair tasks |nodeId|
 
 ### Flags
 
