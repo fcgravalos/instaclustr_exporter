@@ -27,7 +27,7 @@ make
 | cassandra_node_reads_per_second | Reads per second by Cassandra |nodeId|
 | cassandra_node_writes_per_second | Writes per second by Cassandra |nodeId|
 | cassandra_node_compactions | Number of pending compactions |nodeId|
-| cassandra_node_repairs_active | Number of pending repair tasks |nodeId|
+| cassandra_node_repairs_active | Number of active repair tasks |nodeId|
 | cassandra_node_repairs_pending | Number of pending repair tasks |nodeId|
 
 ### Flags
