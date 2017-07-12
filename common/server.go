@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/prometheus/common/log"
 )
 
+// ServerOptions defines the server configuration
 type ServerOptions struct {
 	ListenAddress    string
 	LivenessProbeURL string
@@ -22,6 +24,7 @@ type ServerOptions struct {
 	WriteTimeOut     time.Duration
 }
 
+// Server represents a server type
 type Server struct {
 	Name             string
 	HTTPServer       http.Server
@@ -31,10 +34,12 @@ type Server struct {
 	ShutdownReqCount uint32
 }
 
+// LivenessProbeHandler handles healt-check requests to LivenessProbeURL
 func (s *Server) LivenessProbeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
 
+// ShutDownHandler provides a graceful shutdown via API
 func (s *Server) ShutDownHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Shutting Down... bye! :)"))
 	//Do nothing if shutdown request already issued
@@ -49,6 +54,7 @@ func (s *Server) ShutDownHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
+// WaitForShutDown blocks until a shutdown request gets to the server
 func (s *Server) WaitForShutDown() {
 	irqSig := make(chan os.Signal, 1)
 	signal.Notify(irqSig, syscall.SIGINT, syscall.SIGTERM)
@@ -76,6 +82,7 @@ func (s *Server) WaitForShutDown() {
 	}
 }
 
+// WaitForLiveness blocks un till the server is alive
 func (s *Server) WaitForLiveness() bool {
 	live := false
 	retries := 10
@@ -86,7 +93,7 @@ func (s *Server) WaitForLiveness() bool {
 	}
 	// TODO Implement exponential back-off, in every loop we increment the wait Interval
 	for !live && retries > 0 {
-		req, err := http.NewRequest("GET", fmt.Sprintf("http://"+"%s/%s", s.HTTPServer.Addr, s.LivenessProbeURL), nil)
+		req, err := http.NewRequest("GET", fmt.Sprintf("http://"+"%s/%s", s.HTTPServer.Addr, strings.Trim(s.LivenessProbeURL, "/")), nil)
 		if err != nil {
 			wait()
 			continue
@@ -110,6 +117,7 @@ func (s *Server) WaitForLiveness() bool {
 	return live
 }
 
+// Start starts the server and blocks until it's shut down
 func (s *Server) Start() {
 	go func() {
 		if err := s.HTTPServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -120,9 +128,10 @@ func (s *Server) Start() {
 	s.WaitForShutDown()
 }
 
+// GracefulShutdown shut down provides a safe mechanism tu shut the server down
 func (s *Server) GracefulShutdown() {
 	log.Infof("Shutting down %s", s.Name)
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://"+"%s/%s", s.HTTPServer.Addr, s.ShutdownURL), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("http://"+"%s/%s", s.HTTPServer.Addr, strings.Trim(s.ShutdownURL, "/")), nil)
 	if err != nil {
 		log.Errorf("Could not send shutdown request to %s Server: %v", s.Name, err)
 	}
@@ -139,6 +148,7 @@ func (s *Server) GracefulShutdown() {
 	log.Infof("Server status: %s", string(body))
 }
 
+// NewServer Builds a new server
 func NewServer(name string, opts ServerOptions) *Server {
 	return &Server{
 		Name: name,

@@ -59,7 +59,7 @@ func setup(up chan bool) {
 	go func() {
 		mockServer.Start()
 	}()
-	go func(chan bool) {
+	go func(up chan bool) {
 		exporterServer.WaitForLiveness()
 		mockServer.WaitForLiveness()
 		up <- true
