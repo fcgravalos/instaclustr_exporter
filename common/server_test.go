@@ -54,6 +54,8 @@ func TestWaitForLiveness(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	up := make(chan bool)
+	setup(up)
 	<-up
 	m.Run()
+	tearDown()
 }
