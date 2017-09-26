@@ -389,7 +389,7 @@ func nodeMetricsCollector(c cluster, n node, ms []metrics, ch chan<- prometheus.
 	}
 }
 
-// Describe describes all the metrics ever exported by the Consul exporter. It
+// Describe describes all the metrics ever exported by the Instaclustr exporter. It
 // implements prometheus.Collector.
 func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- clusterInfo
@@ -411,7 +411,7 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- nodeClientRequestWritePercentile
 }
 
-// Collect fetches the stats from configured Consul location and delivers them
+// Collect fetches the stats from configured Instaclustr location and delivers them
 // as Prometheus metrics. It implements prometheus.Collector.
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	clusters := []cluster{}
@@ -427,21 +427,18 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	for _, c := range clusters {
-		wg.Add(1)
-		go func(c cluster) {
-			defer wg.Done()
-			clusterInfoCollector(c, ch)
-			clusterHealthCollector(c, ch)
-			// Queryng status of the cluster, gathers the list of Datacentres
-			sem.Lock()
-			if err := json.Unmarshal(e.provisioningClient.GetClusterStatus(c.ID), &dcs); err != nil {
-				log.Errorf("Couldn't get cluster %s datacentres: %v", c.ID, err)
-				return
-			}
-			sem.Unlock()
-
-			for _, dc := range dcs.Dcs {
-				for _, n := range dc.Nodes {
+		clusterInfoCollector(c, ch)
+		clusterHealthCollector(c, ch)
+		// Queryng status of the cluster, gathers the list of Datacentres
+		if err := json.Unmarshal(e.provisioningClient.GetClusterStatus(c.ID), &dcs); err != nil {
+			log.Errorf("Couldn't get cluster %s datacentres: %v", c.ID, err)
+			return
+		}
+		for _, dc := range dcs.Dcs {
+			for _, n := range dc.Nodes {
+				wg.Add(1)
+				go func(c cluster, n node, ch chan<- prometheus.Metric) {
+					defer wg.Done()
 					nodeInfoCollector(c, n, ch)
 					nodeHealthCollector(c, n, ch)
 					// Fetch all metrics from node
@@ -453,10 +450,11 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 					sem.Unlock()
 					// Collecting node metrics
 					nodeMetricsCollector(c, n, ms, ch)
-				}
+
+				}(c, n, ch)
 			}
-		}(c)
+			// We don't close the channel, prometheus does the job
+			wg.Wait()
+		}
 	}
-	// We don't close the channel, prometheus does the job
-	wg.Wait()
 }
