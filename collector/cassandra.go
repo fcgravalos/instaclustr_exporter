@@ -29,8 +29,8 @@ var allNodeMetricsQuery = []string{
 	"n::cassandraWrites",    //Writes per second by Cassandra.
 	"n::compactions",        //Number of pending compactions.
 	"n::repairs",            //Number of active and pending repair tasks.
-	"n::clientRequestRead",  //95th percentile distribution and average latency per client read request (i.e. the period from when a node receives a client request, gathers the records and response to the client).
-	"n::clientRequestWrite", //95th percentile distribution and average latency per client write request (i.e. the period from when a node receives a client request, gathers the records and response to the client).
+	"n::clientRequestRead",  //95th & 99th percentile distribution and average latency per client read request (i.e. the period from when a node receives a client request, gathers the records and response to the client).
+	"n::clientRequestWrite", //95th & 99th percentile distribution and average latency per client write request (i.e. the period from when a node receives a client request, gathers the records and response to the client).
 }
 
 // Metric descriptors
@@ -136,6 +136,18 @@ var (
 	nodeClientRequestWritePercentile = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "node", "client_request_write_percentile95"),
 		"95th percentile (s) distribution per client write request (i.e. the period from when a node receives a client request, gathers the records and response to the client).",
+		[]string{"nodeId"},
+		nil,
+	)
+	nodeClientRequestReadPercentile99 = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "node", "client_request_read_percentile99"),
+		"99th percentile (s) distribution per client read request (i.e. the period from when a node receives a client request, gathers the records and response to the client).",
+		[]string{"nodeId"},
+		nil,
+	)
+	nodeClientRequestWritePercentile99 = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "node", "client_request_write_percentile99"),
+		"99th percentile (s) distribution per client write request (i.e. the period from when a node receives a client request, gathers the records and response to the client).",
 		[]string{"nodeId"},
 		nil,
 	)
@@ -365,7 +377,7 @@ func nodeMetricsCollector(c cluster, n node, ms []metrics, ch chan<- prometheus.
 
 				} else if m.Type == "99thPercentile" {
 					ch <- prometheus.MustNewConstMetric(
-						nodeClientRequestReadPercentile,
+						nodeClientRequestReadPercentile99,
 						prometheus.GaugeValue,
 						value*usTosecondsFactor,
 						n.ID,
@@ -391,7 +403,7 @@ func nodeMetricsCollector(c cluster, n node, ms []metrics, ch chan<- prometheus.
 					)
 				} else if m.Type == "99thPercentile" {
 					ch <- prometheus.MustNewConstMetric(
-						nodeClientRequestWritePercentile,
+						nodeClientRequestWritePercentile99,
 						prometheus.GaugeValue,
 						value*usTosecondsFactor,
 						n.ID,
@@ -424,6 +436,8 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- nodeClientRequestWriteLatency
 	ch <- nodeClientRequestReadPercentile
 	ch <- nodeClientRequestWritePercentile
+	ch <- nodeClientRequestReadPercentile99
+	ch <- nodeClientRequestWritePercentile99
 }
 
 // Collect fetches the stats from configured Instaclustr location and delivers them
