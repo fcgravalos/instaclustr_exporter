@@ -362,6 +362,14 @@ func nodeMetricsCollector(c cluster, n node, ms []metrics, ch chan<- prometheus.
 						value*usTosecondsFactor,
 						n.ID,
 					)
+
+				} else if m.Type == "99thPercentile" {
+					ch <- prometheus.MustNewConstMetric(
+						nodeClientRequestReadPercentile,
+						prometheus.GaugeValue,
+						value*usTosecondsFactor,
+						n.ID,
+					)
 				} else {
 					log.Warnf("Unknown n::%s metric type %s", m.Name, m.Type)
 				}
@@ -375,6 +383,13 @@ func nodeMetricsCollector(c cluster, n node, ms []metrics, ch chan<- prometheus.
 						n.ID,
 					)
 				} else if m.Type == "95thPercentile" {
+					ch <- prometheus.MustNewConstMetric(
+						nodeClientRequestWritePercentile,
+						prometheus.GaugeValue,
+						value*usTosecondsFactor,
+						n.ID,
+					)
+				} else if m.Type == "99thPercentile" {
 					ch <- prometheus.MustNewConstMetric(
 						nodeClientRequestWritePercentile,
 						prometheus.GaugeValue,
