@@ -445,9 +445,7 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	clusters := []cluster{}
 	dcs := new(datacentres)
-	ms := []metrics{}
 	wg := new(sync.WaitGroup)
-	sem := &sync.Mutex{}
 
 	// Fetching clusters list
 	if err := json.Unmarshal(e.provisioningClient.GetClusters(), &clusters); err != nil {
@@ -471,12 +469,11 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 					nodeInfoCollector(c, n, ch)
 					nodeHealthCollector(c, n, ch)
 					// Fetch all metrics from node
-					sem.Lock()
+					ms := []metrics{}
 					if err := json.Unmarshal(e.monitoringClient.GetNodeMetric(n.ID, strings.Join(allNodeMetricsQuery, ",")), &ms); err != nil {
 						log.Errorf("Could not gather any metric: %v\n", err)
 						return
 					}
-					sem.Unlock()
 					// Collecting node metrics
 					nodeMetricsCollector(c, n, ms, ch)
 
