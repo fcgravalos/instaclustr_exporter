@@ -25,7 +25,7 @@ make
 | cassandra_node_client_request_read_percentile | 95th percentile (us) distribution per client read request (i.e. the period from when a node receives a client request, gathers the records and response to the client) |nodeId|
 | cassandra_node_client_request_write_percentile | 95th percentile (us) distribution per client write request (i.e. the period from when a node receives a client request, gathers the records and response to the client) |nodeId|
 | cassandra_node_client_request_read_percentile99 | 99th percentile (us) distribution per client read request (i.e. the period from when a node receives a client request, gathers the records and response to the client) |nodeId|
-| cassandra_node_client_request_write_percentile | 99th percentile (us) distribution per client write request (i.e. the period from when a node receives a client request, gathers the records and response to the client) |nodeId|
+| cassandra_node_client_request_write_percentile99 | 99th percentile (us) distribution per client write request (i.e. the period from when a node receives a client request, gathers the records and response to the client) |nodeId|
 | cassandra_node_reads_per_second | Reads per second by Cassandra |nodeId|
 | cassandra_node_writes_per_second | Writes per second by Cassandra |nodeId|
 | cassandra_node_compactions | Number of pending compactions |nodeId|
